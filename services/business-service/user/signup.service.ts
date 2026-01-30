@@ -1,9 +1,10 @@
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
-import type { EmailSignupRequestData, GoogleSignupRequestData, VerifyEmailRequestData, SetPasswordRequestData } from "../../dto-service/modules.export";
-import { UserStatus } from "../../dto-service/modules.export";
+import type { EmailSignupRequestData, GoogleSignupRequestData, VerifyEmailRequestData, SetPasswordRequestData, LoginUserRequestData, LoginResponse } from "../../dto-service/modules.export";
+import { UserStatus, AccessTokenExpiry, AccessTokenExpiryInSeconds } from "../../dto-service/modules.export";
 import { sendVerificationEmail, generateVerificationToken } from "../../helper-service/email.helper";
 import { ErrorMessages, Platform } from "../../dto-service/constants/modules.export";
+import { createJWTToken } from "../../helper-service/jwt.helper";
 import {
     findUserByEmailSilently,
     findUserByGoogleId,
@@ -183,5 +184,55 @@ export const setPasswordService = async (data: SetPasswordRequestData): Promise<
 
     return {
         message: "Password set successfully. You can now login.",
+    };
+};
+
+/**
+ * Login service
+ * Authenticates user with email and password
+ */
+export const loginService = async (data: LoginUserRequestData): Promise<LoginResponse> => {
+    const { email, password, platform } = data;
+    const normalizedEmail = email.toLowerCase();
+
+    // Find active user
+    const user = await findUserByEmailSilently(normalizedEmail, platform);
+
+    if (!user || user.status !== UserStatus.ACTIVE) {
+        throw new AppError(ErrorMessages.InvalidEmailOrPassword, 401);
+    }
+
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+        throw new AppError("Email not verified. Please verify your email before logging in.", 401);
+    }
+
+    // Check if user has password set (for email signup users)
+    if (!user.password) {
+        throw new AppError("Password not set. Please complete the signup process.", 401);
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+        throw new AppError(ErrorMessages.InvalidEmailOrPassword, 401);
+    }
+
+    // Generate JWT token
+    const token = createJWTToken(
+        {
+            userId: user._id,
+            email: user.email,
+            platform: user.platform,
+        },
+        AccessTokenExpiry
+    );
+
+    return {
+        email: user.email,
+        role: null,
+        expiresIn: AccessTokenExpiryInSeconds,
+        token,
     };
 };
