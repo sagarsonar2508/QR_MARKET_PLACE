@@ -1,12 +1,10 @@
 import { Router } from "express";
-import { login, emailSignup, googleSignup, verifyEmail, setPassword } from "../controllers/user.controller";
+import { emailSignup, googleSignup, verifyEmail, setPassword } from "../controllers/user.controller";
 import { validateRequest } from "../middlewares/validateRequest";
-import { loginRequestSchema, emailSignupSchema, googleSignupSchema, verifyEmailSchema, setPasswordSchema } from "../middlewares/user.validation";
+import { emailSignupSchema, googleSignupSchema, verifyEmailSchema, setPasswordSchema } from "../middlewares/user/modules.export";
 
 const router = Router();
 
-// Authentication endpoints
-router.post("/login", validateRequest(loginRequestSchema), login);
 router.post("/signup/email", validateRequest(emailSignupSchema), emailSignup);
 router.post("/signup/google", validateRequest(googleSignupSchema), googleSignup);
 router.post("/verify-email", validateRequest(verifyEmailSchema), verifyEmail);

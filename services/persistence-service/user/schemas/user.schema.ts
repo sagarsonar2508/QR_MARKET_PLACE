@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
 import { UserStatus } from "../../../dto-service/modules.export";
 
-export type AuthProvider = "email" | "google";
+export type AuthProvider = "EMAIL" | "GOOGLE";
 
 export interface UserDetails {
   _id?: string;
@@ -10,7 +10,6 @@ export interface UserDetails {
   firstName: string;
   lastName: string;
   status: UserStatus;
-  mobile?: string;
   platform: string;
   authProvider: AuthProvider;
   googleId?: string;
@@ -50,11 +49,6 @@ const userSchema = new Schema<UserDetails>(
       required: true,
       default: UserStatus.ACTIVE,
     },
-    mobile: {
-      type: String,
-      required: false,
-      trim: true,
-    },
     platform: {
       type: String,
       required: true,
@@ -62,9 +56,9 @@ const userSchema = new Schema<UserDetails>(
     },
     authProvider: {
       type: String,
-      enum: ["email", "google"],
+      enum: ["EMAIL", "GOOGLE"],
       required: true,
-      default: "email",
+      default: "EMAIL",
     },
     googleId: {
       type: String,

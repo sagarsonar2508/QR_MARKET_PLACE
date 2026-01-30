@@ -1,6 +1,6 @@
 
 export enum Platform {
-    ENTERPRISE = 'ENTERPRISE',
+    QRU = 'QRU',
 }
 
 export enum HttpStatusCode {

@@ -1,5 +1,5 @@
 import { ErrorMessages, type Platform } from "../../dto-service/constants/modules.export";
-import { UserStatus, type UserRoles } from "../../dto-service/modules.export";
+import { UserStatus } from "../../dto-service/modules.export";
 import { AppError } from "../../helper-service/AppError";
 import { UserModel, type UserDetails, type AuthProvider } from "./schemas/modules.export";
 
@@ -16,7 +16,7 @@ export const findActiveUser = async (email: string, platform: Platform): Promise
   return userDetails;
 };
 
-export const findUserByEmail = async (email: string, platform: Platform): Promise<UserDetails | null> => {
+export const findUserByEmailSilently = async (email: string, platform: Platform): Promise<UserDetails | null> => {
   return await UserModel.findOne({
     email: email.toLowerCase(),
     platform: platform.toLowerCase(),
