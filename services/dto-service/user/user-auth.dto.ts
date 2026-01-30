@@ -29,6 +29,7 @@ export interface SetPasswordRequestData {
   email: string;
   password: string;
   confirmPassword: string;
+  platform: Platform;
 }
 
 export interface LoginResponse {

@@ -155,14 +155,14 @@ export const verifyEmailService = async (data: VerifyEmailRequestData): Promise<
  * Sets password for email-signup users after email verification
  */
 export const setPasswordService = async (data: SetPasswordRequestData): Promise<{ message: string }> => {
-    const { email, password, confirmPassword } = data;
+    const { email, password, confirmPassword, platform } = data;
 
     if (password !== confirmPassword) {
         throw new AppError("Passwords do not match", 400);
     }
 
     // Find user
-    const user = await findUserByEmailSilently(email, Platform.QRU); // Adjust platform as needed
+    const user = await findUserByEmailSilently(email, platform);
 
     if (!user) {
         throw new AppError(ErrorMessages.UserNotFound, 404);
@@ -178,6 +178,7 @@ export const setPasswordService = async (data: SetPasswordRequestData): Promise<
     // Update user with password
     await updateUser(user._id?.toString() || "", {
         password: hashedPassword,
+        status: UserStatus.ACTIVE,
     });
 
     return {
