@@ -1,15 +1,22 @@
 import { Schema, model } from "mongoose";
 import { UserStatus } from "../../../dto-service/modules.export";
 
+export type AuthProvider = "email" | "google";
+
 export interface UserDetails {
   _id?: string;
   email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
+  password?: string;
+  firstName: string;
+  lastName: string;
   status: UserStatus;
   mobile?: string;
   platform: string;
+  authProvider: AuthProvider;
+  googleId?: string;
+  isEmailVerified: boolean;
+  verificationToken?: string;
+  verificationTokenExpiry?: Date;
   createdBy?: number;
   createdAt: Date;
   updatedAt?: Date;
@@ -17,11 +24,6 @@ export interface UserDetails {
 
 const userSchema = new Schema<UserDetails>(
   {
-    _id: {
-      type: String,
-      required: true,
-      unique: true,
-    },
     email: {
       type: String,
       required: true,
@@ -30,16 +32,16 @@ const userSchema = new Schema<UserDetails>(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
     },
     firstName: {
       type: String,
-      required: false,
+      required: true,
       trim: true,
     },
     lastName: {
       type: String,
-      required: false,
+      required: true,
       trim: true,
     },
     status: {
@@ -58,6 +60,31 @@ const userSchema = new Schema<UserDetails>(
       required: true,
       lowercase: true,
     },
+    authProvider: {
+      type: String,
+      enum: ["email", "google"],
+      required: true,
+      default: "email",
+    },
+    googleId: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true,
+    },
+    isEmailVerified: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      required: false,
+    },
+    verificationTokenExpiry: {
+      type: Date,
+      required: false,
+    },
     createdBy: {
       type: Number,
       required: false,
@@ -68,7 +95,8 @@ const userSchema = new Schema<UserDetails>(
 
 // Compound indexes
 userSchema.index({ email: 1, platform: 1 }, { unique: true });
-userSchema.index({ mobile: 1, platform: 1 }, { sparse: true, unique: true });
+userSchema.index({ googleId: 1 }, { sparse: true });
+userSchema.index({ verificationToken: 1 }, { sparse: true });
 userSchema.index({ status: 1 });
 
 export const UserModel = model<UserDetails>("User", userSchema);

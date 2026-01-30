@@ -4,3 +4,4 @@ export * from './catchAsync';
 export * from './response.helper';
 export * from './cors.config';
 export * from './session.helper';
+export * from './email.helper';

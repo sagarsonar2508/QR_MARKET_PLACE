@@ -6,6 +6,31 @@ export interface LoginUserRequestData {
   platform: Platform;
 }
 
+export interface EmailSignupRequestData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  platform: Platform;
+}
+
+export interface GoogleSignupRequestData {
+  googleToken: string;
+  firstName: string;
+  lastName: string;
+  platform: Platform;
+}
+
+export interface VerifyEmailRequestData {
+  token: string;
+  email: string;
+}
+
+export interface SetPasswordRequestData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
 export interface LoginResponse {
   email: string;
   role: string | null;
