@@ -15,7 +15,14 @@ export const googleSignup = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
-  const response = await verifyEmailService(req.body);
+  // Extract token from query or body
+  const token = (req.query.token || req.body.token) as string;
+  
+  if (!token) {
+    throw new Error("Verification token is required");
+  }
+  
+  const response = await verifyEmailService({ token });
   sendResponse(res, { status: HttpStatusCode.OK, data: response, message: response.message });
 });
 

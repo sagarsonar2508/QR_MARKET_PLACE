@@ -22,7 +22,6 @@ export interface GoogleSignupRequestData {
 
 export interface VerifyEmailRequestData {
   token: string;
-  email: string;
 }
 
 export interface SetPasswordRequestData {

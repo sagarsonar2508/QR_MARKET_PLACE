@@ -130,13 +130,22 @@ export const googleSignupService = async (data: GoogleSignupRequestData): Promis
  * Verifies the user's email using the verification token
  */
 export const verifyEmailService = async (data: VerifyEmailRequestData): Promise<{ message: string }> => {
-    const { token, email } = data;
+    const { token } = data;
+
+    if (!token || token.trim() === "") {
+        throw new AppError("Verification token is required", 400);
+    }
 
     // Find user by verification token
     const user = await findUserByVerificationToken(token);
 
-    if (!user || user.email !== email.toLowerCase()) {
+    if (!user) {
         throw new AppError("Invalid or expired verification token", 400);
+    }
+
+    // Check if token has expired (redundant but explicit)
+    if (user.verificationTokenExpiry && user.verificationTokenExpiry < new Date()) {
+        throw new AppError("Verification token has expired", 400);
     }
 
     // Update user as verified

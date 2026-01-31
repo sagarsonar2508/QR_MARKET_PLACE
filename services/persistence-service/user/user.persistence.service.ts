@@ -28,10 +28,27 @@ export const findUserByGoogleId = async (googleId: string): Promise<UserDetails 
 };
 
 export const findUserByVerificationToken = async (token: string): Promise<UserDetails | null> => {
-  return await UserModel.findOne({
+  const now = new Date();
+  const user = await UserModel.findOne({
     verificationToken: token,
-    verificationTokenExpiry: { $gt: new Date() },
   });
+
+  // Check if token exists and hasn't expired
+  if (!user) {
+    return null;
+  }
+
+  // If no expiry date set, token is invalid
+  if (!user.verificationTokenExpiry) {
+    return null;
+  }
+
+  // If token has expired, return null
+  if (user.verificationTokenExpiry < now) {
+    return null;
+  }
+
+  return user;
 };
 
 export const createUser = async (userData: Partial<UserDetails>): Promise<UserDetails> => {

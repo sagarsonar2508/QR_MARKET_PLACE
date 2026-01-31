@@ -31,7 +31,6 @@ export const googleSignupSchema = Joi.object<GoogleSignupRequestData>({
 
 export const verifyEmailSchema = Joi.object<VerifyEmailRequestData>({
   token: Joi.string().required(),
-  email: Joi.string().email().required(),
 });
 
 export const setPasswordSchema = Joi.object<SetPasswordRequestData>({
