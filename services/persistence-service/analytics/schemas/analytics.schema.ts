@@ -35,7 +35,6 @@ const analyticsSchema = new Schema<AnalyticsDetails>(
 );
 
 // Indexes
-analyticsSchema.index({ qrCodeId: 1 });
 analyticsSchema.index({ qrCodeId: 1, createdAt: -1 });
 analyticsSchema.index({ ip: 1 });
 analyticsSchema.index({ city: 1 });

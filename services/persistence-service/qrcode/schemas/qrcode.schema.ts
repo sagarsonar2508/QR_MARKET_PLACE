@@ -63,7 +63,6 @@ const qrcodeSchema = new Schema<QRCodeDetails>(
 
 // Indexes
 qrcodeSchema.index({ userId: 1 });
-qrcodeSchema.index({ slug: 1 });
 qrcodeSchema.index({ isActive: 1 });
 qrcodeSchema.index({ userId: 1, isActive: 1 });
 qrcodeSchema.index({ expiresAt: 1 }, { sparse: true });

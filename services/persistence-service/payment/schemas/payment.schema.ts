@@ -48,7 +48,6 @@ const paymentSchema = new Schema<PaymentDetails>(
 );
 
 // Indexes
-paymentSchema.index({ orderId: 1 });
 paymentSchema.index({ status: 1 });
 paymentSchema.index({ provider: 1 });
 

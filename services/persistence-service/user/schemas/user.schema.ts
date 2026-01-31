@@ -89,7 +89,6 @@ const userSchema = new Schema<UserDetails>(
 
 // Compound indexes
 userSchema.index({ email: 1, platform: 1 }, { unique: true });
-userSchema.index({ googleId: 1 }, { sparse: true });
 userSchema.index({ otp: 1 }, { sparse: true });
 userSchema.index({ status: 1 });
 
