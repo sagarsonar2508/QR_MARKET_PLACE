@@ -7,6 +7,7 @@ import {
   rotateLink,
   disableQRCode,
   deleteQRCode,
+  redirectQRCode,
 } from "../controllers/qrcode.controller";
 import { validateRequest } from "../middlewares/validateRequest";
 import {
@@ -17,6 +18,9 @@ import {
 import { authenticate } from "../middlewares/authenticate";
 
 const router = Router();
+
+// Public endpoints
+router.get("/:slug/scan", redirectQRCode);
 
 // Protected endpoints
 router.post("/", authenticate, validateRequest(createQRCodeSchema), createQRCode);

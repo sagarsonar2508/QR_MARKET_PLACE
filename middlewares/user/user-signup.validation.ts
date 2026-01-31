@@ -40,8 +40,10 @@ export const verifyOtpSchema = Joi.object<VerifyOtpRequestData>({
 export const setPasswordSchema = Joi.object<SetPasswordRequestData>({
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
-  confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
+  confirmPassword: Joi.string().required().valid(Joi.ref('password')).messages({
+    'any.only': 'Passwords do not match'
+  }),
   platform: Joi.string()
     .valid(...platformValues)
     .required(),
-});
+}).with('password', 'confirmPassword');
