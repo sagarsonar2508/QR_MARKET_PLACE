@@ -38,7 +38,7 @@ app.use("/analytics", analyticsRoutes);
 app.use("/webhooks", webhookRoutes);
 
 app.get("/health-check", (req: Request, res: Response) => {
-  res.status(200).send(`Hoopr Sage ${process.env.NODE_ENV} Server is Healthy`);
+  res.status(200).send(`QR ${process.env.NODE_ENV} Server is Healthy`);
 });
 
 app.use(errorHandler);

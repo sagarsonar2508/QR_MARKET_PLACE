@@ -92,7 +92,6 @@ npm start
 ### Check Health
 ```bash
 curl http://localhost:3002/health-check
-# Response: Hoopr Sage development Server is Healthy
 ```
 
 ## Project Structure
