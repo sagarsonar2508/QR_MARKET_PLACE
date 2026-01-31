@@ -8,6 +8,7 @@ import {
 } from "../services/business-service/product/modules.export";
 import { catchAsync, sendResponse } from "../services/helper-service/modules.export";
 import { HttpStatusCode } from "../services/dto-service/modules.export";
+import type { AuthRequest } from "../middlewares/authenticate";
 
 export const createProduct = catchAsync(async (req: Request, res: Response) => {
   const response = await createProductService(req.body);
@@ -27,6 +28,7 @@ export const getProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Public endpoint - get all products with shirt designs
 export const getAllProducts = catchAsync(async (req: Request, res: Response) => {
   const response = await getAllProductsService();
   sendResponse(res, {

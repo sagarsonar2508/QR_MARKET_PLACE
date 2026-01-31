@@ -6,10 +6,17 @@ import {
 } from "../services/business-service/order/modules.export";
 import { catchAsync, sendResponse } from "../services/helper-service/modules.export";
 import { HttpStatusCode } from "../services/dto-service/modules.export";
+import type { AuthRequest } from "../middlewares/authenticate";
 
 export const createOrder = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await createOrderService(req.body, userId);
+  const authReq = req as AuthRequest;
+  const userId = authReq.session?.userId;
+  
+  if (!userId) {
+    throw new Error("User ID not found in session");
+  }
+
+  const response = await createOrderService(req.body, userId.toString());
   sendResponse(res, {
     status: HttpStatusCode.CREATED,
     data: response,
@@ -18,8 +25,14 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getOrder = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await getOrderByIdService(req.params.id as string, userId);
+  const authReq = req as AuthRequest;
+  const userId = authReq.session?.userId;
+  
+  if (!userId) {
+    throw new Error("User ID not found in session");
+  }
+
+  const response = await getOrderByIdService(req.params.id as string, userId.toString());
   sendResponse(res, {
     status: HttpStatusCode.OK,
     data: response,
@@ -28,8 +41,14 @@ export const getOrder = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getMyOrders = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await getUserOrdersService(userId);
+  const authReq = req as AuthRequest;
+  const userId = authReq.session?.userId;
+  
+  if (!userId) {
+    throw new Error("User ID not found in session");
+  }
+
+  const response = await getUserOrdersService(userId.toString());
   sendResponse(res, {
     status: HttpStatusCode.OK,
     data: response,

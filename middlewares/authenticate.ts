@@ -11,7 +11,7 @@ export interface SessionPayload extends JwtPayload {
   sessionId?: number;
 }
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
   session?: SessionPayload;
   sessionToken?: string;
 }
@@ -37,6 +37,41 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     );
   } catch (error) {
     throw new AppError("The JWT token provided is invalid.", 401);
+  }
+};
+
+/**
+ * Optional authentication - doesn't fail if no token, but validates if token is present
+ */
+export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(" ")[1];
+    
+    if (!token) {
+      // No token provided - just continue
+      next();
+      return;
+    }
+
+    jwt.verify(
+      token,
+      process.env.JWT_SECRET_KEY as string,
+      (err, decoded) => {
+        if (err || !decoded) {
+          // Invalid token - just continue without auth
+          console.warn("Invalid token provided but optional auth allows it");
+          next();
+          return;
+        }
+        req.session = decoded as SessionPayload;
+        req.sessionToken = token;
+        next();
+      }
+    );
+  } catch (error) {
+    // Error doesn't matter for optional auth
+    next();
   }
 };
 

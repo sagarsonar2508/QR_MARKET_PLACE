@@ -12,10 +12,17 @@ import {
 import { catchAsync, sendResponse } from "../services/helper-service/modules.export";
 import { HttpStatusCode } from "../services/dto-service/modules.export";
 import { createAnalyticsService } from "../services/business-service/analytics/modules.export";
+import type { AuthRequest } from "../middlewares/authenticate";
 
 export const createQRCode = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await createQRCodeService(req.body, userId);
+  const authReq = req as AuthRequest;
+  const userId = authReq.session?.userId;
+  
+  if (!userId) {
+    throw new Error("User ID not found in session");
+  }
+
+  const response = await createQRCodeService(req.body, userId.toString());
   sendResponse(res, {
     status: HttpStatusCode.CREATED,
     data: response,
@@ -33,8 +40,14 @@ export const getQRCode = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getUserQRCodes = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await getQRCodesByUserIdService(userId);
+  const authReq = req as AuthRequest;
+  const userId = authReq.session?.userId;
+  
+  if (!userId) {
+    throw new Error("User ID not found in session");
+  }
+
+  const response = await getQRCodesByUserIdService(userId.toString());
   sendResponse(res, {
     status: HttpStatusCode.OK,
     data: response,
@@ -43,8 +56,14 @@ export const getUserQRCodes = catchAsync(async (req: Request, res: Response) => 
 });
 
 export const updateQRCode = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await updateQRCodeService(req.params.id as string, userId, req.body);
+  const authReq = req as AuthRequest;
+  const userId = authReq.session?.userId;
+  
+  if (!userId) {
+    throw new Error("User ID not found in session");
+  }
+
+  const response = await updateQRCodeService(req.params.id as string, userId.toString(), req.body);
   sendResponse(res, {
     status: HttpStatusCode.OK,
     data: response,
@@ -53,8 +72,14 @@ export const updateQRCode = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const rotateLink = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await rotateLinkService(req.params.id as string, userId, req.body);
+  const authReq = req as AuthRequest;
+  const userId = authReq.session?.userId;
+  
+  if (!userId) {
+    throw new Error("User ID not found in session");
+  }
+
+  const response = await rotateLinkService(req.params.id as string, userId.toString(), req.body);
   sendResponse(res, {
     status: HttpStatusCode.OK,
     data: response,
@@ -63,8 +88,14 @@ export const rotateLink = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const disableQRCode = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await disableQRCodeService(req.params.id as string, userId);
+  const authReq = req as AuthRequest;
+  const userId = authReq.session?.userId;
+  
+  if (!userId) {
+    throw new Error("User ID not found in session");
+  }
+
+  const response = await disableQRCodeService(req.params.id as string, userId.toString());
   sendResponse(res, {
     status: HttpStatusCode.OK,
     data: response,
@@ -73,8 +104,14 @@ export const disableQRCode = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const deleteQRCode = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await deleteQRCodeService(req.params.id as string, userId);
+  const authReq = req as AuthRequest;
+  const userId = authReq.session?.userId;
+  
+  if (!userId) {
+    throw new Error("User ID not found in session");
+  }
+
+  const response = await deleteQRCodeService(req.params.id as string, userId.toString());
   sendResponse(res, {
     status: HttpStatusCode.OK,
     data: response,

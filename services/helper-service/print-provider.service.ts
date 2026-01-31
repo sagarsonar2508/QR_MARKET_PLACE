@@ -1,87 +1,218 @@
-// Printful/Printify integration service
+// Printify integration service
+import { AppError } from "./AppError";
+
+export interface PrintifyShippingAddress {
+  fullName: string;
+  email: string;
+  phone: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface PrintifyLineItem {
+  productId: number; // Printify product ID
+  variantId: number; // Printify variant ID (for color/size)
+  quantity: number;
+  fileUrl: string; // URL to QR code or design
+}
+
 export interface PrintOrder {
   id: string;
   externalId: string;
+  printifyOrderId?: string;
   productId: number;
   quantity: number;
   status: string;
+  trackingUrl?: string;
+  shippingAddress?: PrintifyShippingAddress;
 }
 
-export const createPrintOrder = async (
+const PRINTIFY_API_BASE = "https://api.printify.com/v1";
+const PRINTIFY_SHOP_ID = process.env.PRINTIFY_SHOP_ID;
+const PRINTIFY_API_KEY = process.env.PRINTIFY_API_KEY;
+
+const getPrintifyHeaders = () => ({
+  Authorization: `Bearer ${PRINTIFY_API_KEY}`,
+  "Content-Type": "application/json",
+});
+
+/**
+ * Create a print order with Printify
+ * @param orderId - Database order ID
+ * @param lineItems - Items to print (with variants for color/size)
+ * @param shippingAddress - Delivery address
+ * @returns Print order details
+ */
+export const createPrintifyOrder = async (
   orderId: string,
-  productId: string,
-  quantity: number,
-  qrCodeImageUrl: string
+  lineItems: PrintifyLineItem[],
+  shippingAddress: PrintifyShippingAddress
 ): Promise<PrintOrder> => {
-  // In production, you would call Printful or Printify API here
-  // For now, return a mock response
-  
   try {
-    // Example: Call Printful API
-    // const response = await fetch('https://api.printful.com/orders', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${process.env.PRINTFUL_API_KEY}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     recipient: { ... },
-    //     items: [{
-    //       product_id: productId,
-    //       quantity: quantity,
-    //       files: [{ url: qrCodeImageUrl }]
-    //     }]
-    //   })
-    // });
-    
+    if (!PRINTIFY_API_KEY || !PRINTIFY_SHOP_ID) {
+      throw new AppError("Printify configuration missing", 500);
+    }
+
+    const requestBody = {
+      external_order_id: orderId,
+      line_items: lineItems.map((item) => ({
+        product_id: item.productId,
+        variant_id: item.variantId,
+        quantity: item.quantity,
+        files: [
+          {
+            type: "design",
+            url: item.fileUrl,
+          },
+        ],
+      })),
+      shipping_address: {
+        first_name: shippingAddress.fullName.split(" ")[0],
+        last_name: shippingAddress.fullName.split(" ").slice(1).join(" "),
+        email: shippingAddress.email,
+        phone: shippingAddress.phone,
+        address1: shippingAddress.street,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        postal_code: shippingAddress.postalCode,
+        country: shippingAddress.country,
+      },
+      shipping_method: 1, // Standard shipping
+      send_shipping_notification: true,
+    };
+
+    const response = await fetch(
+      `${PRINTIFY_API_BASE}/shops/${PRINTIFY_SHOP_ID}/orders`,
+      {
+        method: "POST",
+        headers: getPrintifyHeaders(),
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new AppError(`Printify API error: ${errorData.message}`, response.status);
+    }
+
+    const data = await response.json();
+
     return {
       id: `print-${Date.now()}`,
-      externalId: `ext-${orderId}`,
-      productId: parseInt(productId),
-      quantity,
-      status: "pending",
+      externalId: orderId,
+      printifyOrderId: data.id,
+      productId: lineItems[0]?.productId || 0,
+      quantity: lineItems.reduce((sum, item) => sum + item.quantity, 0),
+      status: data.status || "pending",
+      trackingUrl: data.shipments?.[0]?.tracking_url,
+      shippingAddress,
     };
   } catch (error) {
-    console.error("Error creating print order:", error);
-    throw error;
+    if (error instanceof AppError) throw error;
+    console.error("Error creating Printify order:", error);
+    throw new AppError("Failed to create print order", 500);
   }
 };
 
-export const getPrintOrderStatus = async (printOrderId: string): Promise<PrintOrder> => {
-  // In production, you would call Printful/Printify API
+/**
+ * Get Printify order status
+ * @param printifyOrderId - Printify order ID
+ * @returns Print order status
+ */
+export const getPrintifyOrderStatus = async (printifyOrderId: string): Promise<PrintOrder> => {
   try {
-    // Example: Call Printful API
-    // const response = await fetch(`https://api.printful.com/orders/${printOrderId}`, {
-    //   headers: {
-    //     'Authorization': `Bearer ${process.env.PRINTFUL_API_KEY}`,
-    //   }
-    // });
-    
+    if (!PRINTIFY_API_KEY || !PRINTIFY_SHOP_ID) {
+      throw new AppError("Printify configuration missing", 500);
+    }
+
+    const response = await fetch(
+      `${PRINTIFY_API_BASE}/shops/${PRINTIFY_SHOP_ID}/orders/${printifyOrderId}`,
+      {
+        method: "GET",
+        headers: getPrintifyHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new AppError(`Printify API error: ${response.statusText}`, response.status);
+    }
+
+    const data = await response.json();
+
     return {
-      id: printOrderId,
-      externalId: `ext-${Date.now()}`,
-      productId: 0,
-      quantity: 1,
-      status: "pending",
+      id: data.id,
+      externalId: data.external_order_id,
+      printifyOrderId: data.id,
+      productId: data.line_items?.[0]?.product_id || 0,
+      quantity: data.line_items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0,
+      status: data.status || "pending",
+      trackingUrl: data.shipments?.[0]?.tracking_url,
     };
   } catch (error) {
-    console.error("Error getting print order status:", error);
-    throw error;
+    if (error instanceof AppError) throw error;
+    console.error("Error getting Printify order status:", error);
+    throw new AppError("Failed to fetch order status", 500);
   }
 };
 
-export const cancelPrintOrder = async (printOrderId: string): Promise<void> => {
-  // In production, you would call Printful/Printify API
+/**
+ * Cancel a Printify order
+ * @param printifyOrderId - Printify order ID
+ */
+export const cancelPrintifyOrder = async (printifyOrderId: string): Promise<void> => {
   try {
-    // Example: Call Printful API
-    // const response = await fetch(`https://api.printful.com/orders/${printOrderId}/cancel`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${process.env.PRINTFUL_API_KEY}`,
-    //   }
-    // });
+    if (!PRINTIFY_API_KEY || !PRINTIFY_SHOP_ID) {
+      throw new AppError("Printify configuration missing", 500);
+    }
+
+    const response = await fetch(
+      `${PRINTIFY_API_BASE}/shops/${PRINTIFY_SHOP_ID}/orders/${printifyOrderId}/cancel`,
+      {
+        method: "POST",
+        headers: getPrintifyHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new AppError(`Printify API error: ${response.statusText}`, response.status);
+    }
   } catch (error) {
-    console.error("Error canceling print order:", error);
-    throw error;
+    if (error instanceof AppError) throw error;
+    console.error("Error canceling Printify order:", error);
+    throw new AppError("Failed to cancel order", 500);
   }
 };
+
+/**
+ * Get available Printify products and variants
+ */
+export const getPrintifyProducts = async () => {
+  try {
+    if (!PRINTIFY_API_KEY || !PRINTIFY_SHOP_ID) {
+      throw new AppError("Printify configuration missing", 500);
+    }
+
+    const response = await fetch(
+      `${PRINTIFY_API_BASE}/shops/${PRINTIFY_SHOP_ID}/products`,
+      {
+        method: "GET",
+        headers: getPrintifyHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new AppError(`Printify API error: ${response.statusText}`, response.status);
+    }
+
+    const data = await response.json();
+    return data.data || [];
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error("Error fetching Printify products:", error);
+    throw new AppError("Failed to fetch products", 500);
+  }
+};
+

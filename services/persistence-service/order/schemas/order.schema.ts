@@ -6,6 +6,19 @@ export interface OrderDetails {
   userId: string;
   productId: string;
   qrCodeId: string;
+  shirtColor?: string; // Shirt color code
+  shirtSize?: string; // XS, S, M, L, XL, XXL
+  shirtMockupUrl?: string; // URL to shirt with QR design
+  shippingAddress: {
+    fullName: string;
+    email: string;
+    phone: string;
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
   amount: number;
   quantity: number;
   paymentStatus: PaymentStatus;
@@ -15,6 +28,41 @@ export interface OrderDetails {
   createdAt: Date;
   updatedAt: Date;
 }
+
+const shippingAddressSchema = new Schema({
+  fullName: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+  },
+  phone: {
+    type: String,
+    required: true,
+  },
+  street: {
+    type: String,
+    required: true,
+  },
+  city: {
+    type: String,
+    required: true,
+  },
+  state: {
+    type: String,
+    required: true,
+  },
+  postalCode: {
+    type: String,
+    required: true,
+  },
+  country: {
+    type: String,
+    required: true,
+  },
+});
 
 const orderSchema = new Schema<OrderDetails>(
   {
@@ -32,6 +80,23 @@ const orderSchema = new Schema<OrderDetails>(
       type: String,
       required: true,
       ref: "QRCode",
+    },
+    shirtColor: {
+      type: String,
+      required: false,
+    },
+    shirtSize: {
+      type: String,
+      enum: ["XS", "S", "M", "L", "XL", "XXL"],
+      required: false,
+    },
+    shirtMockupUrl: {
+      type: String,
+      required: false,
+    },
+    shippingAddress: {
+      type: shippingAddressSchema,
+      required: true,
     },
     amount: {
       type: Number,
