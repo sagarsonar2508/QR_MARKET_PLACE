@@ -14,8 +14,8 @@ export interface UserDetails {
   authProvider: AuthProvider;
   googleId?: string;
   isEmailVerified: boolean;
-  verificationToken?: string;
-  verificationTokenExpiry?: Date;
+  otp?: string;
+  otpExpiry?: Date;
   createdBy?: number;
   createdAt: Date;
   updatedAt?: Date;
@@ -71,11 +71,11 @@ const userSchema = new Schema<UserDetails>(
       required: true,
       default: false,
     },
-    verificationToken: {
+    otp: {
       type: String,
       required: false,
     },
-    verificationTokenExpiry: {
+    otpExpiry: {
       type: Date,
       required: false,
     },
@@ -90,7 +90,7 @@ const userSchema = new Schema<UserDetails>(
 // Compound indexes
 userSchema.index({ email: 1, platform: 1 }, { unique: true });
 userSchema.index({ googleId: 1 }, { sparse: true });
-userSchema.index({ verificationToken: 1 }, { sparse: true });
+userSchema.index({ otp: 1 }, { sparse: true });
 userSchema.index({ status: 1 });
 
 export const UserModel = model<UserDetails>("User", userSchema);

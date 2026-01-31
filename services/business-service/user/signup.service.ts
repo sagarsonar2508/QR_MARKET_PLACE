@@ -1,14 +1,13 @@
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
-import type { EmailSignupRequestData, GoogleSignupRequestData, VerifyEmailRequestData, SetPasswordRequestData, LoginUserRequestData, LoginResponse } from "../../dto-service/modules.export";
+import type { EmailSignupRequestData, GoogleSignupRequestData, VerifyOtpRequestData, SetPasswordRequestData, LoginUserRequestData, LoginResponse, OtpResponse } from "../../dto-service/modules.export";
 import { UserStatus, AccessTokenExpiry, AccessTokenExpiryInSeconds } from "../../dto-service/modules.export";
-import { sendVerificationEmail, generateVerificationToken } from "../../helper-service/email.helper";
+import { sendOtpEmail, generateOTP } from "../../helper-service/email.helper";
 import { ErrorMessages, Platform } from "../../dto-service/constants/modules.export";
 import { createJWTToken } from "../../helper-service/jwt.helper";
 import {
     findUserByEmailSilently,
     findUserByGoogleId,
-    findUserByVerificationToken,
     createUser,
     updateUser,
 } from "../../persistence-service/user/user.persistence.service";
@@ -19,33 +18,36 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const emailSignupService = async (
     data: EmailSignupRequestData
-): Promise<{ message: string }> => {
+): Promise<OtpResponse> => {
     const { email, firstName, lastName, platform } = data;
     const normalizedEmail = email.toLowerCase();
     const existingUser = await findUserByEmailSilently(
         normalizedEmail,
         platform
     );
+    
+    // If user already exists and is ACTIVE, throw error
     if (existingUser?.status === UserStatus.ACTIVE) {
         throw new AppError(ErrorMessages.UserAlreadyExists, 400);
     }
-    const { token, expiry } = generateVerificationToken();
-    // CASE 2: User exists but is INACTIVE → update token & resend email
+
+    const { otp, expiry } = generateOTP();
+
+    // CASE 1: User exists but is INACTIVE → update OTP & resend email
     if (existingUser && existingUser.status === UserStatus.INACTIVE) {
         await updateUser(existingUser._id!, {
-            verificationToken: token,
-            verificationTokenExpiry: expiry,
-            isEmailVerified: false,
+            otp,
+            otpExpiry: expiry,
         });
 
-        await sendVerificationEmail(normalizedEmail, existingUser.firstName, token);
+        await sendOtpEmail(normalizedEmail, existingUser.firstName, otp);
 
         return {
-            message: "Verification email resent. Please check your inbox.",
+            message: "OTP sent to your email. Please verify to continue.",
         };
     }
 
-    // CASE 3: User does not exist → create new user
+    // CASE 2: User does not exist → create new user
     await createUser({
         email: normalizedEmail,
         firstName,
@@ -53,15 +55,15 @@ export const emailSignupService = async (
         platform,
         authProvider: "EMAIL",
         isEmailVerified: false,
-        verificationToken: token,
-        verificationTokenExpiry: expiry,
-        status: UserStatus.INACTIVE, // important: keep inactive until verified
+        otp,
+        otpExpiry: expiry,
+        status: UserStatus.INACTIVE,
     });
 
-    await sendVerificationEmail(normalizedEmail, firstName, token);
+    await sendOtpEmail(normalizedEmail, firstName, otp);
 
     return {
-        message: "Verification email sent. Please check your inbox.",
+        message: "OTP sent to your email. Please verify to continue.",
     };
 };
 
@@ -126,33 +128,38 @@ export const googleSignupService = async (data: GoogleSignupRequestData): Promis
 };
 
 /**
- * Verify email service
- * Verifies the user's email using the verification token
+ * Verify OTP service
+ * Verifies the user's email using the OTP
  */
-export const verifyEmailService = async (data: VerifyEmailRequestData): Promise<{ message: string }> => {
-    const { token } = data;
+export const verifyOtpService = async (data: VerifyOtpRequestData): Promise<OtpResponse> => {
+    const { email, otp, platform } = data;
+    const normalizedEmail = email.toLowerCase();
 
-    if (!token || token.trim() === "") {
-        throw new AppError("Verification token is required", 400);
+    if (!otp || otp.trim() === "") {
+        throw new AppError("OTP is required", 400);
     }
 
-    // Find user by verification token
-    const user = await findUserByVerificationToken(token);
+    // Find user by email
+    const user = await findUserByEmailSilently(normalizedEmail, platform);
 
     if (!user) {
-        throw new AppError("Invalid or expired verification token", 400);
+        throw new AppError(ErrorMessages.UserNotFound, 404);
     }
 
-    // Check if token has expired (redundant but explicit)
-    if (user.verificationTokenExpiry && user.verificationTokenExpiry < new Date()) {
-        throw new AppError("Verification token has expired", 400);
+    if (!user.otp || user.otp !== otp) {
+        throw new AppError("Invalid OTP", 400);
+    }
+
+    // Check if OTP has expired
+    if (user.otpExpiry && user.otpExpiry < new Date()) {
+        throw new AppError("OTP has expired. Please request a new one.", 400);
     }
 
     // Update user as verified
     await updateUser(user._id?.toString() || "", {
         isEmailVerified: true,
-        verificationToken: undefined,
-        verificationTokenExpiry: undefined,
+        otp: undefined,
+        otpExpiry: undefined,
     });
 
     return {
@@ -162,9 +169,9 @@ export const verifyEmailService = async (data: VerifyEmailRequestData): Promise<
 
 /**
  * Set password service
- * Sets password for email-signup users after email verification
+ * Sets password for email-signup users after OTP verification
  */
-export const setPasswordService = async (data: SetPasswordRequestData): Promise<{ message: string }> => {
+export const setPasswordService = async (data: SetPasswordRequestData): Promise<OtpResponse> => {
     const { email, password, confirmPassword, platform } = data;
 
     if (password !== confirmPassword) {
@@ -172,7 +179,7 @@ export const setPasswordService = async (data: SetPasswordRequestData): Promise<
     }
 
     // Find user
-    const user = await findUserByEmailSilently(email, platform);
+    const user = await findUserByEmailSilently(email.toLowerCase(), platform);
 
     if (!user) {
         throw new AppError(ErrorMessages.UserNotFound, 404);

@@ -17,31 +17,29 @@ export const initializeEmailService = () => {
 };
 
 /**
- * Send verification email
+ * Send OTP email
  */
-export const sendVerificationEmail = async (
+export const sendOtpEmail = async (
   email: string,
   firstName: string,
-  verificationToken: string
+  otp: string
 ): Promise<void> => {
   if (!transporter) {
     throw new Error("Email service not initialized");
   }
 
-  const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
-
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: "Verify Your Email",
+    subject: "Your OTP for Email Verification",
     html: `
       <h1>Welcome, ${firstName}!</h1>
-      <p>Please verify your email by clicking the link below:</p>
-      <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-        Verify Email
-      </a>
-      <p>Or copy and paste this link: ${verificationLink}</p>
-      <p>This link will expire in 24 hours.</p>
+      <p>Your One-Time Password (OTP) for email verification is:</p>
+      <div style="font-size: 32px; font-weight: bold; color: #4CAF50; letter-spacing: 5px; margin: 20px 0;">
+        ${otp}
+      </div>
+      <p>This OTP will expire in 10 minutes.</p>
+      <p>If you did not request this, please ignore this email.</p>
     `,
   };
 
@@ -78,6 +76,16 @@ export const sendPasswordResetEmail = async (
   };
 
   await transporter.sendMail(mailOptions);
+};
+
+/**
+ * Generate OTP (6 digits)
+ */
+export const generateOTP = (): { otp: string; expiry: Date } => {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiry = new Date();
+  expiry.setMinutes(expiry.getMinutes() + 10); // 10 minutes expiry
+  return { otp, expiry };
 };
 
 /**

@@ -20,8 +20,10 @@ export interface GoogleSignupRequestData {
   platform: Platform;
 }
 
-export interface VerifyEmailRequestData {
-  token: string;
+export interface VerifyOtpRequestData {
+  email: string;
+  otp: string;
+  platform: Platform;
 }
 
 export interface SetPasswordRequestData {
@@ -36,6 +38,10 @@ export interface LoginResponse {
   role: string | null;
   expiresIn: number;
   token: string;
+}
+
+export interface OtpResponse {
+  message: string;
 }
 
 export const AccessTokenExpiry = "3h";

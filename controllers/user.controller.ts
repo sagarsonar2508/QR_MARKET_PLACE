@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
-import { emailSignupService, googleSignupService, verifyEmailService, setPasswordService, loginService } from "../services/business-service/user/modules.export";
+import { emailSignupService, googleSignupService, verifyOtpService, setPasswordService, loginService } from "../services/business-service/user/modules.export";
 import { catchAsync, sendResponse } from "../services/helper-service/modules.export";
 import { ResponseMessages } from "../services/dto-service/constants/response-messages";
 import { HttpStatusCode } from "../services/dto-service/modules.export";
 
 export const emailSignup = catchAsync(async (req: Request, res: Response) => {
   const response = await emailSignupService(req.body);
-  sendResponse(res, { status: HttpStatusCode.CREATED, data: response, message: "Signup successful" });
+  sendResponse(res, { status: HttpStatusCode.CREATED, data: response, message: "OTP sent to your email" });
 });
 
 export const googleSignup = catchAsync(async (req: Request, res: Response) => {
@@ -14,15 +14,8 @@ export const googleSignup = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { status: HttpStatusCode.CREATED, data: response, message: "Google signup successful" });
 });
 
-export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
-  // Extract token from query or body
-  const token = (req.query.token || req.body.token) as string;
-  
-  if (!token) {
-    throw new Error("Verification token is required");
-  }
-  
-  const response = await verifyEmailService({ token });
+export const verifyOtp = catchAsync(async (req: Request, res: Response) => {
+  const response = await verifyOtpService(req.body);
   sendResponse(res, { status: HttpStatusCode.OK, data: response, message: response.message });
 });
 
