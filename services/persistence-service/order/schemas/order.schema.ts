@@ -4,7 +4,6 @@ import { OrderStatus, PaymentStatus } from "../../../dto-service/modules.export"
 export interface OrderDetails {
   _id?: string;
   userId: string;
-  cafeId: string;
   productId: string;
   qrCodeId: string;
   amount: number;
@@ -23,11 +22,6 @@ const orderSchema = new Schema<OrderDetails>(
       type: String,
       required: true,
       ref: "User",
-    },
-    cafeId: {
-      type: String,
-      required: true,
-      ref: "Cafe",
     },
     productId: {
       type: String,
@@ -76,7 +70,6 @@ const orderSchema = new Schema<OrderDetails>(
 
 // Indexes
 orderSchema.index({ userId: 1 });
-orderSchema.index({ cafeId: 1 });
 orderSchema.index({ orderStatus: 1 });
 orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ userId: 1, createdAt: -1 });

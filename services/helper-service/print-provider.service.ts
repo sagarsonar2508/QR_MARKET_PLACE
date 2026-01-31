@@ -8,7 +8,7 @@ export interface PrintOrder {
 }
 
 export const createPrintOrder = async (
-  cafeId: string,
+  orderId: string,
   productId: string,
   quantity: number,
   qrCodeImageUrl: string
@@ -36,7 +36,7 @@ export const createPrintOrder = async (
     
     return {
       id: `print-${Date.now()}`,
-      externalId: `ext-${cafeId}`,
+      externalId: `ext-${orderId}`,
       productId: parseInt(productId),
       quantity,
       status: "pending",

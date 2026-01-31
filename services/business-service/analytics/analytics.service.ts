@@ -5,7 +5,6 @@ import {
   getAnalyticsStats,
 } from "../../persistence-service/analytics/modules.export";
 import { getQRCodeById } from "../../persistence-service/qrcode/modules.export";
-import { getCafeById } from "../../persistence-service/cafe/modules.export";
 import { AppError } from "../../helper-service/AppError";
 
 export const createAnalyticsService = async (data: CreateAnalyticsRequestData) => {
@@ -18,8 +17,7 @@ export const getQRCodeAnalyticsService = async (qrCodeId: string, userId: string
     throw new AppError("QR Code not found", 404);
   }
 
-  const cafe = await getCafeById(qrcode.cafeId);
-  if (!cafe || cafe.ownerId !== userId) {
+  if (qrcode.userId !== userId) {
     throw new AppError("Unauthorized to view analytics for this QR code", 403);
   }
 
@@ -32,8 +30,7 @@ export const getQRCodeStatsService = async (qrCodeId: string, userId: string) =>
     throw new AppError("QR Code not found", 404);
   }
 
-  const cafe = await getCafeById(qrcode.cafeId);
-  if (!cafe || cafe.ownerId !== userId) {
+  if (qrcode.userId !== userId) {
     throw new AppError("Unauthorized to view stats for this QR code", 403);
   }
 

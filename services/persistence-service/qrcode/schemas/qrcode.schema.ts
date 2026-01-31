@@ -3,7 +3,7 @@ import { QRCodeType } from "../../../dto-service/modules.export";
 
 export interface QRCodeDetails {
   _id?: string;
-  cafeId: string;
+  userId: string;
   slug: string;
   type: QRCodeType;
   destinationUrl: string;
@@ -17,10 +17,10 @@ export interface QRCodeDetails {
 
 const qrcodeSchema = new Schema<QRCodeDetails>(
   {
-    cafeId: {
+    userId: {
       type: String,
       required: true,
-      ref: "Cafe",
+      ref: "User",
     },
     slug: {
       type: String,
@@ -62,10 +62,10 @@ const qrcodeSchema = new Schema<QRCodeDetails>(
 );
 
 // Indexes
-qrcodeSchema.index({ cafeId: 1 });
+qrcodeSchema.index({ userId: 1 });
 qrcodeSchema.index({ slug: 1 });
 qrcodeSchema.index({ isActive: 1 });
-qrcodeSchema.index({ cafeId: 1, isActive: 1 });
+qrcodeSchema.index({ userId: 1, isActive: 1 });
 qrcodeSchema.index({ expiresAt: 1 }, { sparse: true });
 
 export const QRCodeModel = model<QRCodeDetails>("QRCode", qrcodeSchema);

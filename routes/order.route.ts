@@ -3,7 +3,6 @@ import {
   createOrder,
   getOrder,
   getMyOrders,
-  getCafeOrders,
 } from "../controllers/order.controller";
 import { validateRequest } from "../middlewares/validateRequest";
 import { createOrderSchema } from "../middlewares/order/modules.export";
@@ -17,6 +16,5 @@ router.use(authenticate);
 router.post("/", validateRequest(createOrderSchema), createOrder);
 router.get("/", getMyOrders);
 router.get("/:id", getOrder);
-router.get("/cafe/:cafeId", getCafeOrders);
 
 export default router;

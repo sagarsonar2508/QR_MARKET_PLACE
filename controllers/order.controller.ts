@@ -3,7 +3,6 @@ import {
   createOrderService,
   getOrderByIdService,
   getUserOrdersService,
-  getCafeOrdersService,
 } from "../services/business-service/order/modules.export";
 import { catchAsync, sendResponse } from "../services/helper-service/modules.export";
 import { HttpStatusCode } from "../services/dto-service/modules.export";
@@ -35,15 +34,5 @@ export const getMyOrders = catchAsync(async (req: Request, res: Response) => {
     status: HttpStatusCode.OK,
     data: response,
     message: "Orders retrieved successfully",
-  });
-});
-
-export const getCafeOrders = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const response = await getCafeOrdersService(req.params.cafeId as string, userId);
-  sendResponse(res, {
-    status: HttpStatusCode.OK,
-    data: response,
-    message: "Cafe orders retrieved successfully",
   });
 });

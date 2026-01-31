@@ -41,7 +41,6 @@ export const sendOrderConfirmationEmail = async (
   email: string,
   orderData: {
     orderId: string;
-    cafeeName: string;
     productName: string;
     amount: number;
   }
@@ -51,7 +50,6 @@ export const sendOrderConfirmationEmail = async (
     <p>Thank you for your order!</p>
     <ul>
       <li><strong>Order ID:</strong> ${orderData.orderId}</li>
-      <li><strong>Cafe:</strong> ${orderData.cafeeName}</li>
       <li><strong>Product:</strong> ${orderData.productName}</li>
       <li><strong>Amount:</strong> ₹${orderData.amount}</li>
     </ul>

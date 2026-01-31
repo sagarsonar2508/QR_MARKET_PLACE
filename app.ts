@@ -3,7 +3,6 @@ import express from "express";
 import type { Application, Request, Response } from "express";
 import cors from "cors";
 import userRoutes from "./routes/user.route";
-import cafeRoutes from "./routes/cafe.route";
 import qrcodeRoutes from "./routes/qrcode.route";
 import productRoutes from "./routes/product.route";
 import orderRoutes from "./routes/order.route";
@@ -31,7 +30,6 @@ app.get("/q/:slug", redirectQRCode);
 
 // Route handlers
 app.use("/user", userRoutes);
-app.use("/cafes", cafeRoutes);
 app.use("/qrcodes", qrcodeRoutes);
 app.use("/products", productRoutes);
 app.use("/orders", orderRoutes);

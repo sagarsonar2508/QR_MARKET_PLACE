@@ -3,7 +3,7 @@ import {
   createQRCodeService,
   getQRCodeByIdService,
   getQRCodeBySlugService,
-  getQRCodesByCafeIdService,
+  getQRCodesByUserIdService,
   updateQRCodeService,
   rotateLinkService,
   disableQRCodeService,
@@ -32,9 +32,9 @@ export const getQRCode = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const getCafeQRCodes = catchAsync(async (req: Request, res: Response) => {
+export const getUserQRCodes = catchAsync(async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
-  const response = await getQRCodesByCafeIdService(req.params.cafeId as string, userId);
+  const response = await getQRCodesByUserIdService(userId);
   sendResponse(res, {
     status: HttpStatusCode.OK,
     data: response,

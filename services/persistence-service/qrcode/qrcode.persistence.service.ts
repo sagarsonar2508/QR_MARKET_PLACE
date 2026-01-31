@@ -3,7 +3,7 @@ import type { QRCodeDetails } from "./schemas/modules.export";
 import type { CreateQRCodeRequestData, UpdateQRCodeRequestData } from "../../dto-service/modules.export";
 
 export const createQRCode = async (
-  data: CreateQRCodeRequestData & { slug: string }
+  data: CreateQRCodeRequestData & { slug: string; userId: string }
 ): Promise<QRCodeDetails> => {
   const qrcode = new QRCodeModel(data);
   return await qrcode.save();
@@ -17,8 +17,8 @@ export const getQRCodeBySlug = async (slug: string): Promise<QRCodeDetails | nul
   return await QRCodeModel.findOne({ slug });
 };
 
-export const getQRCodesByCafeId = async (cafeId: string): Promise<QRCodeDetails[]> => {
-  return await QRCodeModel.find({ cafeId });
+export const getQRCodesByUserId = async (userId: string): Promise<QRCodeDetails[]> => {
+  return await QRCodeModel.find({ userId });
 };
 
 export const updateQRCode = async (
@@ -40,9 +40,9 @@ export const incrementQRCodeScanCount = async (qrcodeId: string): Promise<QRCode
   );
 };
 
-export const getQRCodeByIdAndCafeId = async (
+export const getQRCodeByIdAndUserId = async (
   qrcodeId: string,
-  cafeId: string
+  userId: string
 ): Promise<QRCodeDetails | null> => {
-  return await QRCodeModel.findOne({ _id: qrcodeId, cafeId });
+  return await QRCodeModel.findOne({ _id: qrcodeId, userId });
 };

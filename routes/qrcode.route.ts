@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   createQRCode,
   getQRCode,
-  getCafeQRCodes,
+  getUserQRCodes,
   updateQRCode,
   rotateLink,
   disableQRCode,
@@ -20,8 +20,8 @@ const router = Router();
 
 // Protected endpoints
 router.post("/", authenticate, validateRequest(createQRCodeSchema), createQRCode);
+router.get("/", authenticate, getUserQRCodes);
 router.get("/:id", authenticate, getQRCode);
-router.get("/cafe/:cafeId", authenticate, getCafeQRCodes);
 router.put("/:id", authenticate, validateRequest(updateQRCodeSchema), updateQRCode);
 router.post("/:id/rotate-link", authenticate, validateRequest(rotateLinkSchema), rotateLink);
 router.post("/:id/disable", authenticate, disableQRCode);

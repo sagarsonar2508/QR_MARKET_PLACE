@@ -4,12 +4,10 @@ import {
   createOrder,
   getOrderById,
   getOrdersByUserId,
-  getOrdersByCafeId,
   updateOrder,
   updatePaymentStatus,
 } from "../../persistence-service/order/modules.export";
 import { getProductById } from "../../persistence-service/product/modules.export";
-import { getCafeById } from "../../persistence-service/cafe/modules.export";
 import { getQRCodeById } from "../../persistence-service/qrcode/modules.export";
 import { AppError } from "../../helper-service/AppError";
 
@@ -21,12 +19,6 @@ export const createOrderService = async (
   const product = await getProductById(data.productId);
   if (!product) {
     throw new AppError("Product not found", 404);
-  }
-
-  // Verify cafe exists and belongs to user
-  const cafe = await getCafeById(data.cafeId);
-  if (!cafe || cafe.ownerId !== userId) {
-    throw new AppError("Unauthorized to create order for this cafe", 403);
   }
 
   // Verify QR code exists
@@ -59,14 +51,6 @@ export const getOrderByIdService = async (orderId: string, userId: string) => {
 
 export const getUserOrdersService = async (userId: string) => {
   return await getOrdersByUserId(userId);
-};
-
-export const getCafeOrdersService = async (cafeId: string, userId: string) => {
-  const cafe = await getCafeById(cafeId);
-  if (!cafe || cafe.ownerId !== userId) {
-    throw new AppError("Unauthorized to view orders for this cafe", 403);
-  }
-  return await getOrdersByCafeId(cafeId);
 };
 
 export const updateOrderPaymentStatusService = async (

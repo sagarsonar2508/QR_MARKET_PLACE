@@ -1,7 +1,6 @@
 import Joi from "joi";
 
 export const createQRCodeSchema = Joi.object({
-  cafeId: Joi.string().required(),
   type: Joi.string().required().valid("GOOGLE_REVIEW", "CUSTOM_URL", "PRODUCT_LINK"),
   destinationUrl: Joi.string().required().uri(),
   expiresAt: Joi.date().optional().greater("now"),

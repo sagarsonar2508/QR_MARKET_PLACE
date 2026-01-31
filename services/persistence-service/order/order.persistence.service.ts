@@ -22,10 +22,6 @@ export const getOrdersByUserId = async (userId: string): Promise<OrderDetails[]>
   return await OrderModel.find({ userId }).sort({ createdAt: -1 });
 };
 
-export const getOrdersByCafeId = async (cafeId: string): Promise<OrderDetails[]> => {
-  return await OrderModel.find({ cafeId }).sort({ createdAt: -1 });
-};
-
 export const updateOrder = async (
   orderId: string,
   updates: Partial<OrderDetails>

@@ -1,7 +1,6 @@
 import type { QRCodeType } from "./qrcode.enum";
 
 export interface CreateQRCodeRequestData {
-  cafeId: string;
   type: QRCodeType;
   destinationUrl: string;
   expiresAt?: Date;
@@ -19,7 +18,7 @@ export interface RotateLinkRequestData {
 
 export interface QRCodeResponseData {
   _id: string;
-  cafeId: string;
+  userId: string;
   slug: string;
   type: QRCodeType;
   destinationUrl: string;
