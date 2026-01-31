@@ -1,5 +1,5 @@
 import Joi from "joi";
-import type { EmailSignupRequestData, GoogleSignupRequestData, VerifyEmailRequestData, SetPasswordRequestData, LoginUserRequestData } from "../services/dto-service/modules.export";
+import type { EmailSignupRequestData, GoogleSignupRequestData, SetPasswordRequestData, LoginUserRequestData } from "../services/dto-service/modules.export";
 import { Platform } from "../services/dto-service/constants/modules.export";
 const platformValues = Object.values(Platform) as string[];
 
@@ -27,11 +27,6 @@ export const googleSignupSchema = Joi.object<GoogleSignupRequestData>({
   platform: Joi.string()
     .valid(...platformValues)
     .required(),
-});
-
-export const verifyEmailSchema = Joi.object<VerifyEmailRequestData>({
-  token: Joi.string().required(),
-  email: Joi.string().email().required(),
 });
 
 export const setPasswordSchema = Joi.object<SetPasswordRequestData>({

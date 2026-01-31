@@ -27,6 +27,10 @@ export const findUserByGoogleId = async (googleId: string): Promise<UserDetails 
   return await UserModel.findOne({ googleId });
 };
 
+export const getUserById = async (userId: string): Promise<UserDetails | null> => {
+  return await UserModel.findById(userId);
+};
+
 export const createUser = async (userData: Partial<UserDetails>): Promise<UserDetails> => {
   const user = new UserModel(userData);
   return await user.save();

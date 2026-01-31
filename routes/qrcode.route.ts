@@ -1,0 +1,30 @@
+import { Router } from "express";
+import {
+  createQRCode,
+  getQRCode,
+  getCafeQRCodes,
+  updateQRCode,
+  rotateLink,
+  disableQRCode,
+  deleteQRCode,
+} from "../controllers/qrcode.controller";
+import { validateRequest } from "../middlewares/validateRequest";
+import {
+  createQRCodeSchema,
+  updateQRCodeSchema,
+  rotateLinkSchema,
+} from "../middlewares/qrcode/modules.export";
+import { authenticate } from "../middlewares/authenticate";
+
+const router = Router();
+
+// Protected endpoints
+router.post("/", authenticate, validateRequest(createQRCodeSchema), createQRCode);
+router.get("/:id", authenticate, getQRCode);
+router.get("/cafe/:cafeId", authenticate, getCafeQRCodes);
+router.put("/:id", authenticate, validateRequest(updateQRCodeSchema), updateQRCode);
+router.post("/:id/rotate-link", authenticate, validateRequest(rotateLinkSchema), rotateLink);
+router.post("/:id/disable", authenticate, disableQRCode);
+router.delete("/:id", authenticate, deleteQRCode);
+
+export default router;

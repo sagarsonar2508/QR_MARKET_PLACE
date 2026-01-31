@@ -1,0 +1,5 @@
+export enum QRCodeType {
+  GOOGLE_REVIEW = "GOOGLE_REVIEW",
+  CUSTOM_URL = "CUSTOM_URL",
+  PRODUCT_LINK = "PRODUCT_LINK",
+}
