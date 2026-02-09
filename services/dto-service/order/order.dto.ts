@@ -15,8 +15,17 @@ export interface OrderResponseData {
   quantity: number;
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
-  printProviderOrderId?: string;
+  // Shopify Integration
+  shopifyOrderId?: string;
+  shopifyCustomerId?: string;
+  // Qikink Integration
+  qikinkOrderId?: string;
+  qikinkStatus?: string;
+  // Fulfillment Info
   trackingUrl?: string;
+  trackingNumber?: string;
+  shippingCarrier?: string;
+  estimatedDeliveryDate?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,3 +1,6 @@
+// DEPRECATED: This file is deprecated. Use shopify-webhook.handler.ts and qikink-webhook.handler.ts instead.
+// This file is kept for backward compatibility only.
+
 import { getOrderById, updateOrderStatus } from "../persistence-service/order/modules.export";
 import { sendShippingNotificationEmail } from "./notification.service";
 import { getUserById } from "../persistence-service/user/user.persistence.service";

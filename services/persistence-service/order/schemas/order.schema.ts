@@ -23,8 +23,17 @@ export interface OrderDetails {
   quantity: number;
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
-  printProviderOrderId?: string;
+  // Shopify Integration
+  shopifyOrderId?: string;
+  shopifyCustomerId?: string;
+  // Qikink Integration
+  qikinkOrderId?: string;
+  qikinkStatus?: string;
+  // Fulfillment Info
   trackingUrl?: string;
+  trackingNumber?: string;
+  shippingCarrier?: string;
+  estimatedDeliveryDate?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -121,11 +130,43 @@ const orderSchema = new Schema<OrderDetails>(
       required: true,
       default: OrderStatus.CREATED,
     },
-    printProviderOrderId: {
+    // Shopify Integration
+    shopifyOrderId: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true,
+    },
+    shopifyCustomerId: {
       type: String,
       required: false,
     },
+    // Qikink Integration
+    qikinkOrderId: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true,
+    },
+    qikinkStatus: {
+      type: String,
+      required: false,
+      enum: ["received", "processing", "manufacturing", "quality_check", "dispatched", "shipped", "delivered", "cancelled"],
+    },
+    // Fulfillment Info
     trackingUrl: {
+      type: String,
+      required: false,
+    },
+    trackingNumber: {
+      type: String,
+      required: false,
+    },
+    shippingCarrier: {
+      type: String,
+      required: false,
+    },
+    estimatedDeliveryDate: {
       type: String,
       required: false,
     },

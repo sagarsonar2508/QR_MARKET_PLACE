@@ -7,7 +7,8 @@ import {
   updatePaymentStatus,
   updatePaymentByOrderId,
 } from "../../persistence-service/payment/modules.export";
-import { getOrderById, updatePaymentStatus as updateOrderPaymentStatus } from "../../persistence-service/order/modules.export";
+import { getOrderById, updatePaymentStatus as updateOrderPaymentStatus, updateOrder } from "../../persistence-service/order/modules.export";
+import { createOrGetShopifyCustomer, createShopifyCheckout } from "../../helper-service/shopify.service";
 import { AppError } from "../../helper-service/AppError";
 
 export const initiatePaymentService = async (data: CreatePaymentRequestData) => {
@@ -17,19 +18,50 @@ export const initiatePaymentService = async (data: CreatePaymentRequestData) => 
     throw new AppError("Order not found", 404);
   }
 
-  // Create payment record
-  const payment = await createPayment(data);
-  
-  // In production, you would integrate with actual payment provider here
-  // For now, return the payment object
-  return {
-    paymentId: payment._id,
-    orderId: payment.orderId,
-    amount: payment.amount,
-    provider: payment.provider,
-    // For Razorpay, you'd return order_id from Razorpay API
-    // For Stripe, you'd return client_secret
-  };
+  try {
+    // Create or get Shopify customer
+    const shippingAddress = order.shippingAddress;
+    const nameParts = shippingAddress.fullName.split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
+    const customer = await createOrGetShopifyCustomer(
+      shippingAddress.email,
+      firstName,
+      lastName,
+      shippingAddress.phone
+    );
+
+    // Create Shopify checkout
+    // For now, using a placeholder variant ID - in production, map from your products to Shopify
+    const variantId = process.env.SHOPIFY_PRODUCT_VARIANT_ID || "default_variant";
+    const checkout = await createShopifyCheckout([variantId], [order.quantity || 1], customer.id);
+
+    // Create or update payment record
+    let payment = await getPaymentByOrderId(data.orderId);
+    if (!payment) {
+      payment = await createPayment(data);
+    }
+
+    // Update order with Shopify customer ID
+    await updateOrder(data.orderId, {
+      shopifyCustomerId: customer.id,
+    });
+
+    return {
+      paymentId: payment._id,
+      orderId: payment.orderId,
+      amount: payment.amount,
+      provider: payment.provider,
+      shopifyCheckoutUrl: checkout.webUrl,
+      shopifyCheckoutToken: checkout.token,
+      // Return the checkout URL to redirect the user
+      redirectUrl: checkout.webUrl,
+    };
+  } catch (error) {
+    console.error("Error initiating Shopify payment:", error);
+    throw error;
+  }
 };
 
 export const verifyPaymentService = async (data: VerifyPaymentRequestData) => {
@@ -38,10 +70,9 @@ export const verifyPaymentService = async (data: VerifyPaymentRequestData) => {
     throw new AppError("Payment not found", 404);
   }
 
-  // In production, verify with payment provider
-  // For now, just update status
+  // In production, verify with Shopify webhook signature
+  // For now, verify with Razorpay if using hybrid approach
   if (payment.provider === "RAZORPAY" && data.signature) {
-    // Verify Razorpay signature
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_SECRET || "")
       .update(`${data.orderId}|${data.paymentId}`)
@@ -60,13 +91,11 @@ export const verifyPaymentService = async (data: VerifyPaymentRequestData) => {
 };
 
 export const handlePaymentWebhookService = async (data: any) => {
-  // Handle Razorpay webhook
+  // Handle Razorpay webhook for non-Shopify payments
   if (data.event === "payment.authorized" || data.event === "payment.captured") {
     const providerPaymentId = data.payload?.payment?.entity?.id;
     const amount = data.payload?.payment?.entity?.amount;
     
-    // Find order from provider payment ID
-    // This is a simplified version - in production you'd look up by order reference
     const orderId = data.payload?.order?.entity?.receipt;
     
     if (orderId) {

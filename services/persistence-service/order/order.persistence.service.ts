@@ -42,3 +42,11 @@ export const updatePaymentStatus = async (
 ): Promise<OrderDetails | null> => {
   return await OrderModel.findByIdAndUpdate(orderId, { paymentStatus }, { new: true });
 };
+
+export const getOrderByShopifyOrderId = async (shopifyOrderId: string): Promise<OrderDetails | null> => {
+  return await OrderModel.findOne({ shopifyOrderId });
+};
+
+export const getOrderByQikinkOrderId = async (qikinkOrderId: string): Promise<OrderDetails | null> => {
+  return await OrderModel.findOne({ qikinkOrderId });
+};

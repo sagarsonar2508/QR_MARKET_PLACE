@@ -1,4 +1,11 @@
-// Printify integration service
+// DEPRECATED: This file is deprecated. Use shopify.service.ts and qikink.service.ts instead.
+// This file is kept for backward compatibility only.
+// New implementations should use:
+// - shopify.service.ts for order creation and checkout
+// - qikink.service.ts for fulfillment
+// - shopify-webhook.handler.ts for Shopify webhooks
+// - qikink-webhook.handler.ts for Qikink webhooks
+
 import { AppError } from "./AppError";
 
 export interface PrintifyShippingAddress {

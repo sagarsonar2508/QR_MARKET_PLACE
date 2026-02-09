@@ -57,20 +57,77 @@ The application has been restructured to implement a shirt design + QR code cust
   - Creating orders
   - Accessing dashboard
 
-#### Printify Integration (`services/helper-service/print-provider.service.ts`)
+#### Printify Integration (DEPRECATED)
+
+**MIGRATION NOTICE:** Printify has been replaced with Shopify + Qikink integration.
+
+The legacy Printify service (`services/helper-service/print-provider.service.ts`) is deprecated but kept for backward compatibility. New implementations must use:
+- `shopify.service.ts` for order creation and checkout
+- `qikink.service.ts` for fulfillment and tracking
+- `shopify-webhook.handler.ts` for Shopify webhooks
+- `qikink-webhook.handler.ts` for Qikink webhooks
+
+**Legacy Printify Environment Variables** (Deprecated)
+```
+PRINTIFY_API_KEY=your_api_key (DEPRECATED)
+PRINTIFY_SHOP_ID=your_shop_id (DEPRECATED)
+```
+
+#### Shopify Integration (`services/helper-service/shopify.service.ts`)
 
 **New Methods:**
 ```typescript
-createPrintifyOrder() // Submit order to Printify with shipping details
-getPrintifyOrderStatus() // Track order status
-cancelPrintifyOrder() // Cancel Printify order
-getPrintifyProducts() // Fetch available Printify products
+getShopifyProduct(handle) // Get product by handle
+createOrGetShopifyCustomer(email, firstName, lastName, phone) // Manage customers
+createShopifyCheckout(variantIds, quantities, customerId) // Create checkout
+getShopifyOrder(orderId) // Get order details
+createShopifyFulfillment(orderId, lineItemIds, trackingInfo) // Fulfill order
+cancelShopifyOrder(orderId, reason) // Cancel order
 ```
 
 **Environment Variables Required:**
 ```
-PRINTIFY_API_KEY=your_api_key
-PRINTIFY_SHOP_ID=your_shop_id
+SHOPIFY_STORE_URL=https://your-store.myshopify.com
+SHOPIFY_ACCESS_TOKEN=your_shopify_api_access_token
+SHOPIFY_API_VERSION=2024-04
+SHOPIFY_WEBHOOK_SECRET=your_shopify_webhook_secret
+SHOPIFY_PRODUCT_VARIANT_ID=gid://shopify/ProductVariant/123456
+```
+
+#### Qikink Integration (`services/helper-service/qikink.service.ts`)
+
+**New Methods:**
+```typescript
+getQikinkOrderStatus(orderId) // Get manufacturing and shipping status
+createQikinkOrder(shopifyOrderId, products, shippingAddress) // Submit order
+syncShopifyOrderToQikink(shopifyOrder) // Sync Shopify order to Qikink
+cancelQikinkOrder(orderId, reason) // Cancel manufacturing
+getQikinkProducts() // Get available products/SKUs
+verifyQikinkWebhookSignature(payload, signature) // Verify webhook signature
+```
+
+**Environment Variables Required:**
+```
+QIKINK_API_BASE=https://api.qikink.com/v1
+QIKINK_API_KEY=your_qikink_api_key
+QIKINK_MERCHANT_ID=your_qikink_merchant_id
+QIKINK_WEBHOOK_SECRET=your_qikink_webhook_secret
+```
+
+#### Webhook Flow
+
+**Old Flow (Deprecated):**
+```
+Order → Printify → Printify Webhook → Order Status
+```
+
+**New Flow:**
+```
+Order → Shopify Webhook → DB Update → Qikink Sync
+        ↓
+    Qikink Webhook → DB Update + Email Notification
+        ↓
+    Shopify Fulfillment → Order Shipped
 ```
 
 ### Frontend (Next.js/React)
@@ -149,16 +206,43 @@ npm install
 
 2. **Environment Variables** (Add to `.env`)
 ```
+# Server
 PORT=3002
 NODE_ENV=development
-JWT_SECRET_KEY=your_secret_key
+
+# Database
 MONGODB_URI=your_mongodb_connection_string
-PRINTIFY_API_KEY=your_printify_api_key
-PRINTIFY_SHOP_ID=your_printify_shop_id
+
+# JWT
+JWT_SECRET=your_jwt_secret_key
+JWT_EXPIRE=7d
+
+# Shopify Configuration
+SHOPIFY_STORE_URL=https://your-store.myshopify.com
+SHOPIFY_ACCESS_TOKEN=your_shopify_api_access_token
+SHOPIFY_API_VERSION=2024-04
+SHOPIFY_WEBHOOK_SECRET=your_shopify_webhook_secret
+SHOPIFY_PRODUCT_VARIANT_ID=gid://shopify/ProductVariant/123456
+
+# Qikink Configuration
+QIKINK_API_BASE=https://api.qikink.com/v1
+QIKINK_API_KEY=your_qikink_api_key
+QIKINK_MERCHANT_ID=your_qikink_merchant_id
+QIKINK_WEBHOOK_SECRET=your_qikink_webhook_secret
+
+# Email
 EMAIL_SERVICE=gmail
 EMAIL_USER=your_email
 EMAIL_PASSWORD=your_password
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+
+# Frontend URL (for redirects)
 FRONTEND_URL=http://localhost:3000
+
+# Payment (Legacy - for backward compatibility)
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_SECRET=your_razorpay_secret
 ```
 
 3. **Database Seeding** (Optional - Create sample products)

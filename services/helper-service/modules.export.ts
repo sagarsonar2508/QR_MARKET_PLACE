@@ -6,3 +6,8 @@ export * from './cors.config';
 export * from './email.helper';
 export * from './qr-generator';
 export * from './print-provider.service';
+export * from './shopify.service';
+export * from './qikink.service';
+export * from './shopify-webhook.handler';
+export * from './qikink-webhook.handler';
+export * from './qikink-shopify.utils';

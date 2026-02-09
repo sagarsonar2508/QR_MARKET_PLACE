@@ -17,6 +17,19 @@ import { getCorsOptions } from "./services/helper-service/modules.export";
 dotenv.config();
 
 const app: Application = express();
+
+// Middleware to capture raw body for webhook signature verification
+app.use((req: Request, res: Response, next) => {
+  let rawBody = "";
+  req.on("data", (chunk) => {
+    rawBody += chunk.toString();
+  });
+  req.on("end", () => {
+    (req as any).rawBody = rawBody;
+    next();
+  });
+});
+
 app.use(express.json());
 
 await initializeBusinessService();

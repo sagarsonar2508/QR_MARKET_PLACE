@@ -1,0 +1,212 @@
+# QIKINK + SHOPIFY INTEGRATION - IMPLEMENTATION CHECKLIST
+
+## Overview
+This document guides you through migrating from Printify to Shopify + Qikink integration.
+
+## ✅ COMPLETED BACKEND CHANGES
+
+### 1. New Services Created
+- [x] `shopify.service.ts` - Shopify API integration
+- [x] `qikink.service.ts` - Qikink fulfillment integration
+- [x] `shopify-webhook.handler.ts` - Shopify webhook handling
+- [x] `qikink-webhook.handler.ts` - Qikink webhook handling
+- [x] `qikink-shopify.utils.ts` - Utility functions for status mapping
+
+### 2. Database Schema Updated
+- [x] Order schema: Replaced `printProviderOrderId` with `shopifyOrderId` and `qikinkOrderId`
+- [x] Added Qikink status tracking fields
+- [x] Added fulfillment tracking fields (tracking number, carrier, ETA)
+- [x] Added Shopify customer ID reference
+
+### 3. Business Logic Updated
+- [x] Payment service: Now redirects to Shopify checkout instead of Printify
+- [x] Order service: Syncs with Shopify and Qikink
+- [x] Webhook routes: Handle Shopify and Qikink events
+- [x] Order DTOs: Updated to reflect new fields
+
+### 4. Order Status Enums
+- [x] Added new statuses: CONFIRMED, PROCESSING, READY_TO_SHIP
+- [x] Removed dependency on Printify status
+
+## 🔧 NEXT STEPS - CONFIGURATION
+
+### 1. Update Environment Variables
+Copy `.env.example` and fill in your Shopify and Qikink credentials:
+
+```
+# Shopify
+SHOPIFY_STORE_URL=https://your-store.myshopify.com
+SHOPIFY_ACCESS_TOKEN=your_access_token
+SHOPIFY_API_VERSION=2024-04
+SHOPIFY_WEBHOOK_SECRET=your_webhook_secret
+
+# Qikink
+QIKINK_API_BASE=https://api.qikink.com/v1
+QIKINK_API_KEY=your_api_key
+QIKINK_MERCHANT_ID=your_merchant_id
+QIKINK_WEBHOOK_SECRET=your_webhook_secret
+```
+
+### 2. Configure Shopify
+1. Create a Shopify app/custom app in your store
+2. Get API credentials (access token)
+3. Set up webhook for:
+   - order/created
+   - order/paid
+   - order/fulfilled
+   - order/cancelled
+   - order/refunded
+4. Webhook URL: `https://your-api-url/webhooks/shopify`
+
+### 3. Configure Qikink
+1. Get API credentials from Qikink dashboard
+2. Set up webhook for order status updates
+3. Webhook URL: `https://your-api-url/webhooks/qikink`
+4. Map your products to Qikink SKUs
+
+### 4. Update Frontend
+Frontend changes are minimal - mainly UI updates:
+- Order status display now uses new status values
+- Checkout redirects to Shopify instead of payment form
+- Order tracking shows Qikink status
+
+## 🔄 ORDER FLOW (NEW)
+
+```
+1. User creates QR code → Stores QR in database
+2. User clicks Buy → Creates order in database
+3. Payment initiated → Creates Shopify checkout
+4. User redirected → Completes payment on Shopify
+5. Shopify webhook → Order confirmed, Qikink sync triggered
+6. Qikink receives order → Starts manufacturing
+7. Qikink updates → Status sent via webhook
+8. Customer notified → Email with tracking when shipped
+9. Order delivered → Final status update
+```
+
+## 📋 WEBHOOK SIGNATURES
+
+### Shopify Signature Verification
+- Header: `X-Shopify-Hmac-SHA256`
+- Algorithm: HMAC-SHA256
+- Secret: `SHOPIFY_WEBHOOK_SECRET`
+
+### Qikink Signature Verification
+- Header: `X-Qikink-Signature`
+- Algorithm: HMAC-SHA256
+- Secret: `QIKINK_WEBHOOK_SECRET`
+
+## 🧪 TESTING CHECKLIST
+
+- [ ] Create test order in database
+- [ ] Verify Shopify customer creation
+- [ ] Test Shopify checkout flow
+- [ ] Simulate Shopify order webhook
+- [ ] Verify Qikink order sync
+- [ ] Simulate Qikink status updates
+- [ ] Test email notifications
+- [ ] Verify order status transitions
+- [ ] Check tracking information display
+- [ ] Test order cancellation (if allowed)
+
+## 📊 DATABASE MIGRATION
+
+If you have existing orders with Printify:
+1. Create migration script to map `printProviderOrderId` → `shopifyOrderId`
+2. Update order statuses to match new enum
+3. Backfill Qikink data if available from Qikink API
+
+Example migration:
+```javascript
+// mongodb
+db.orders.updateMany(
+  { printProviderOrderId: { $exists: true } },
+  [
+    {
+      $set: {
+        shopifyOrderId: "$printProviderOrderId",
+        orderStatus: "PROCESSING",
+        qikinkStatus: "received"
+      }
+    },
+    {
+      $unset: ["printProviderOrderId"]
+    }
+  ]
+);
+```
+
+## 🔐 SECURITY CONSIDERATIONS
+
+1. **Webhook Signature Verification**: Always verify webhook signatures
+2. **API Keys**: Keep Shopify and Qikink API keys secure in .env
+3. **Rate Limiting**: Implement rate limiting on webhook endpoints
+4. **Idempotency**: Handle duplicate webhook events
+
+## 📞 API REFERENCE
+
+### Shopify Endpoints Used
+- GET `/admin/api/{version}/products.json` - Get products
+- GET `/admin/api/{version}/customers/search.json` - Search customers
+- POST `/admin/api/{version}/customers.json` - Create customers
+- POST `/admin/api/{version}/draft_orders.json` - Create draft orders
+- PUT `/admin/api/{version}/draft_orders/{id}/complete.json` - Complete order
+- GET `/admin/api/{version}/orders/{id}.json` - Get order details
+- POST `/admin/api/{version}/orders/{id}/fulfillments.json` - Fulfill order
+- POST `/admin/api/{version}/orders/{id}/cancel.json` - Cancel order
+
+### Qikink Endpoints Used
+- GET `/orders/{id}` - Get order status
+- POST `/orders` - Create order
+- POST `/orders/{id}/cancel` - Cancel order
+- GET `/products` - Get available products
+
+## 🔧 DEPLOYMENT NOTES
+
+1. Deploy backend changes first
+2. Configure Shopify and Qikink credentials in production
+3. Set up webhook endpoints (must be publicly accessible)
+4. Test webhook delivery from Shopify/Qikink dashboards
+5. Monitor webhook logs for failures
+6. Deploy frontend changes (if any)
+
+## 📝 LEGACY SUPPORT
+
+- `print-provider.service.ts` is deprecated but still available
+- `print-webhook.handler.ts` is deprecated but still available
+- Old routes still work but should not be used
+
+## ❓ TROUBLESHOOTING
+
+### Webhooks not being received?
+- Verify webhook URL is publicly accessible
+- Check SHOPIFY_WEBHOOK_SECRET and QIKINK_WEBHOOK_SECRET
+- Check firewall/proxy settings
+- Test webhook delivery from provider dashboards
+
+### Orders not syncing to Qikink?
+- Verify Qikink API credentials
+- Check if products are mapped to Qikink SKUs
+- Verify shipping address is complete
+
+### Tracking not updating?
+- Verify Qikink webhook is configured correctly
+- Check Qikink order status in dashboard
+- Verify email notifications are enabled
+
+## 📚 REFERENCES
+
+- Shopify Admin API: https://shopify.dev/docs/admin-api
+- Qikink Documentation: https://qikink.com/docs (adjust URL as needed)
+- Google Webhook Security: https://developers.google.com/identity/protocols/oauth2/service-account/best-practices
+
+## ✨ BENEFITS OF NEW INTEGRATION
+
+✅ Better order tracking and transparency
+✅ Automatic GST invoice generation
+✅ Real-time shipping updates
+✅ More reliable fulfillment process
+✅ Centralized customer management in Shopify
+✅ Better scalability for high volume
+✅ Improved customer communication
+✅ Lower failure rates vs. Printify
